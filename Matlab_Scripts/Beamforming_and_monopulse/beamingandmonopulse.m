@@ -11,14 +11,10 @@ ula = phased.ULA('NumElements', numElements, 'ElementSpacing', wavelength/2);
 sv = phased.SteeringVector('SensorArray', ula, 'PropagationSpeed', speed);
 
 %% 2. Simulate the "Hidden" Target
-true_target_angle = 42.84;  % A highly specific, off-center mystery angle
-v_mystery = sv(carrierFreq, true_target_angle); % Raw incoming wavefront
+true_target_angle = 42.84;  % mystery angle
+v_mystery = sv(carrierFreq, true_target_angle); % Raw incoming wavefron
 
-%% ========================================================================
 %% STEP 1: THE BEAMFORMING SEARCH (COARSE ANGLE)
-%% ========================================================================
-% The system has no idea where the target is. It sweeps a single beam 
-% across the entire 180-degree field of view in 1-degree steps.
 
 scanAngles = -90:1:90; 
 received_power = zeros(size(scanAngles));
@@ -33,21 +29,16 @@ end
 
 % Find the single angle that returned the highest power
 [~, max_idx] = max(received_power);
-coarse_angle = scanAngles(max_idx); % This is our rough estimate!
+coarse_angle = scanAngles(max_idx); % rough estimate
 
 fprintf('--- Step 1: Beamforming Search ---\n');
 fprintf('Peak power detected at Coarse Angle: %.1f degrees\n\n', coarse_angle);
 
-%% ========================================================================
 %% STEP 2: THE MONOPULSE TRACK (FINE ANGLE REFINEMENT)
-%% ========================================================================
-% Now that we know the target is roughly around the coarse_angle, we 
-% center our monopulse logic precisely on that spot to find the exact decimal.
 
 lookAngle = coarse_angle;   % Lock the monopulse center to the rough estimate
 squintAngle = 5;            % Squint beams 5 degrees left and right
 
-% Generate the squinted weights around the new look angle
 w_left  = sv(carrierFreq, lookAngle - squintAngle);
 w_right = sv(carrierFreq, lookAngle + squintAngle);
 
@@ -79,9 +70,6 @@ fprintf('Coarse Estimate:        %.3f degrees\n', coarse_angle);
 fprintf('Exact Monopulse Angle:  %.3f degrees\n', exact_estimated_angle);
 fprintf('Final Calculation Error: %.3f degrees\n', abs(true_target_angle - exact_estimated_angle));
 
-%% ========================================================================
-%% 3. VISUALIZATIONS
-%% ========================================================================
 
 % Figure 1: The Coarse Sweep
 figure(1);
