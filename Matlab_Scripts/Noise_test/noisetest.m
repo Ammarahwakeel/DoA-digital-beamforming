@@ -1,6 +1,6 @@
 clear; clc; close all;
 
-%% 1. System Setup
+%% System Setup
 carrierFreq = 30e6;
 speed = physconst('LightSpeed');
 wavelength = speed/carrierFreq;
@@ -10,12 +10,11 @@ numElements = 8;
 ula = phased.ULA('NumElements', numElements, 'ElementSpacing', wavelength/2);
 sv = phased.SteeringVector('SensorArray', ula, 'PropagationSpeed', speed);
 
-%% 2. Simulate the "Hidden" Target and ADD NOISE
-% Moved the target to the edge of the radar's vision!
+%% Simulate the "Hidden" Target and add noise
+% Moved the target to the edge of the radar's vision
 true_target_angle = 15.45;  
 v_clean = sv(carrierFreq, true_target_angle); 
 
-% Freeze the noise to a specific, disruptive pattern for the demo
 rng(5); 
 SNR_dB = 8; % 8 dB SNR creates realistic edge-case interference
 noise_power = 10^(-SNR_dB/10);
@@ -23,9 +22,7 @@ noise = sqrt(noise_power/2) * (randn(numElements,1) + 1i*randn(numElements,1));
 
 v_noisy = v_clean + noise; 
 
-%% ========================================================================
 %% TEST 1: MONOPULSE ONLY (NO BEAMFORMING)
-%% ========================================================================
 testAngles_unsteered = -20:0.001:20;
 v_unsteered_sweep = sv(carrierFreq, testAngles_unsteered);
 subA_sweep = sum(v_unsteered_sweep(1:4, :), 1);
@@ -40,9 +37,8 @@ meas_ratio_mono = imag((target_subA - target_subB) / (target_subA + target_subB)
 exact_angle_mono = testAngles_unsteered(idx_mono);
 error_mono = abs(true_target_angle - exact_angle_mono);
 
-%% ========================================================================
+
 %% TEST 2: THE BEAMFORMING-INTEGRATED SEARCH & TRACK
-%% ========================================================================
 % --- Step 2A: Coarse Beamforming Search ---
 scanAngles = -90:1:90; 
 received_power = zeros(size(scanAngles));
@@ -53,7 +49,7 @@ end
 [~, max_idx] = max(received_power);
 coarse_angle = scanAngles(max_idx); 
 
-% --- Step 2B: Local Monopulse Track ---
+% Step 2B: Local Monopulse Track 
 lookAngle = coarse_angle;   
 squintAngle = 5;            
 w_left  = sv(carrierFreq, lookAngle - squintAngle);
@@ -75,9 +71,8 @@ measured_ratio_bf = real(target_delta / target_sum);
 exact_angle_bf = local_test_angles(closest_index);
 error_bf = abs(true_target_angle - exact_angle_bf);
 
-%% ========================================================================
-%% 3. RESULTS OUTPUT
-%% ========================================================================
+%%  RESULTS OUTPUT
+
 fprintf('--- NOISE IMMUNITY COMPARISON (SNR = %d dB) ---\n', SNR_dB);
 fprintf('True Target Angle:      %.3f degrees\n\n', true_target_angle);
 
