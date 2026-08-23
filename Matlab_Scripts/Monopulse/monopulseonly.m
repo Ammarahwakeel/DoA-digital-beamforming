@@ -16,25 +16,17 @@ testAngles = -20:0.01:20;
 sv = phased.SteeringVector('SensorArray', ula, 'PropagationSpeed', speed);
 v_all = sv(carrierFreq, testAngles); % Size: 8 antennas x 4001 angles
 
-% =========================================================================
-% STEP 2: THE SUB-ARRAY SPLIT (NO BEAM STEERING)
-% We do not generate steered weights. We just physically group the hardware.
-% Sub-array A: Left half (Antennas 1, 2, 3, 4)
-% Sub-array B: Right half (Antennas 5, 6, 7, 8)
-% =========================================================================
+
+%  THE SUB-ARRAY SPLIT 
 sub_A_responses = sum(v_all(1:4, :), 1); 
 sub_B_responses = sum(v_all(5:8, :), 1);
 
 % Pure Monopulse Math (Sum and Difference of the two halves)
 sum_response = sub_A_responses + sub_B_responses;
 delta_response = sub_A_responses - sub_B_responses;
-
-% Because Phase-Comparison Monopulse relies on the physical distance 
-% between the two sub-arrays, the mathematical difference is 90 degrees out 
-% of phase. Therefore, we extract the imaginary part!
 monopulse_ratio = imag(delta_response ./ sum_response);
 
-%% 3. PRACTICAL EXAMPLE: TRACKING A TARGET WITHOUT BEAMFORMING
+%% TRACKING A TARGET WITHOUT BEAMFORMING
 true_target_angle = 6.15; % The hidden target
 v_mystery = sv(carrierFreq, true_target_angle);
 
@@ -57,7 +49,7 @@ fprintf('Hardware Measured Ratio: %.4f\n', measured_ratio);
 fprintf('Estimated Target Angle:  %.3f degrees\n', estimated_angle);
 fprintf('Calculation Error:       %.3f degrees\n', abs(true_target_angle - estimated_angle));
 
-%% 4. VISUALIZATION
+%%  Graph
 figure(1);
 plot(testAngles, monopulse_ratio, 'b', 'LineWidth', 2);
 hold on;
